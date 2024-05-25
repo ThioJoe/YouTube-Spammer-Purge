@@ -30,7 +30,8 @@ encrypt_config = load_config_file(onlyGetSettings=True, configVersion=configVers
 SALT_BYTES = 64
 SCRYPT_N = 2**18
 
-YOUTUBE = None
+# the second element will be used for multithreading only
+YOUTUBE = [None, None]
 CURRENTUSER = None
 
 
@@ -100,7 +101,10 @@ def get_authenticated_service():
     else:
       with open(TOKEN_FILE_NAME, 'w') as token:
         token.write(creds.to_json())
-  YOUTUBE = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
+
+  # the program crashes if i used the same build for multithreading so i made a list of 2
+  YOUTUBE[0] = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
+  YOUTUBE[1] = build(API_SERVICE_NAME, API_VERSION, credentials=creds, discoveryServiceUrl=DISCOVERY_SERVICE_URL, cache_discovery=False, cache=None)
   return YOUTUBE
 
 
@@ -143,7 +147,7 @@ def get_current_user(config):
 
   #Define fetch function so it can be re-used if issue and need to re-run it
   def fetch_user():
-    results = YOUTUBE.channels().list(
+    results = YOUTUBE[0].channels().list(
       part="snippet", #Can also add "contentDetails" or "statistics"
       mine=True,
       fields="items/id,items/snippet/title"

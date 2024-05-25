@@ -5,6 +5,7 @@ import Scripts.validation as validation
 import Scripts.auth as auth
 from googleapiclient.errors import HttpError
 from html import unescape
+import shutil
 
 ##########################################################################################
 ############################## UTILITY FUNCTIONS #########################################
@@ -13,11 +14,16 @@ from html import unescape
 ################################### GET VIDEO TITLE ###############################################
 # Check if video title is in dictionary, if not get video title from video ID using YouTube API request, then return title
 def get_video_title(current, video_id):
-  if video_id in current.vidTitleDict.keys():
-    title = current.vidTitleDict[video_id]
+  if type(current) == dict:
+    vidTitleDict = current["vidTitleDict"]
+  else:
+    vidTitleDict = current.vidTitleDict
+
+  if video_id in vidTitleDict.keys():
+    title = vidTitleDict[video_id]
   elif current.errorOccurred == False:
     try:
-      results = auth.YOUTUBE.videos().list(
+      results = auth.YOUTUBE[0].videos().list(
         part="snippet",
         id=video_id,
         fields="items/snippet/title",
@@ -39,13 +45,13 @@ def get_video_title(current, video_id):
 
     if results['items']:
       title = unescape(results["items"][0]["snippet"]["title"])
-      current.vidTitleDict[video_id] = title
+      vidTitleDict[video_id] = title
     elif (len(video_id) == 26 or len(video_id) == 36) and video_id[0:2] == "Ug":
       title = "[Community Post - No Title]"
-      current.vidTitleDict[video_id] = title
+      vidTitleDict[video_id] = title
     else:
       title = "[Title Unavailable]"
-      current.vidTitleDict[video_id] = title
+      vidTitleDict[video_id] = title
   else:
     title = "[Title Unavailable]"
 
